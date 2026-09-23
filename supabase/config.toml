@@ -1,0 +1,4 @@
+project_id = "vfadpvdxpjjyaijmcydo"
+
+[functions.files]
+verify_jwt = true
