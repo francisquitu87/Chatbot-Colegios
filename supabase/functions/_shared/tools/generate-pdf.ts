@@ -22,7 +22,7 @@ const TITLE_SIZE = 24
 export type PdfTable = { headers: string[]; rows: string[][] }
 export type PdfSection = { heading: string; paragraphs?: string[]; bullets?: string[]; table?: PdfTable | null }
 export type GeneratePdfArguments = { filename: string; title: string; author: string; subtitle?: string | null; sections: PdfSection[]; footer?: string | null }
-export type GeneratedPdfResult = { generated_file_id: string; filename: string; version: number; parent_generated_file_id?: string; mime_type: 'application/pdf'; size_bytes: number }
+export type GeneratedPdfResult = { generated_file_id: string; filename: string; version: number; parent_generated_file_id?: string; mime_type: 'application/pdf'; format: 'pdf'; size_bytes: number }
 
 type Layout = {
   doc: PDFDocument
@@ -265,7 +265,7 @@ export async function persistGeneratedPdf(input: GeneratePdfArguments, context: 
   if (parent) {
     await context.supabase.from('generated_files').update({ superseded_at: new Date().toISOString() }).eq('id', parent.id).eq('user_id', context.userId)
   }
-  return { generated_file_id: fileId, filename, version, ...(parent ? { parent_generated_file_id: parent.id } : {}), mime_type: 'application/pdf', size_bytes: pdfBytes.length }
+  return { generated_file_id: fileId, filename, version, ...(parent ? { parent_generated_file_id: parent.id } : {}), mime_type: 'application/pdf', format: 'pdf', size_bytes: pdfBytes.length }
 }
 
 export const generatePdfTool: ToolDefinition = {

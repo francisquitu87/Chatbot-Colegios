@@ -6,6 +6,7 @@ export type GeneratedFile = {
   mime_type: string
   size_bytes: number
   version: number
+  format?: 'pdf' | 'xlsx'
   parent_generated_file_id?: string
 }
 

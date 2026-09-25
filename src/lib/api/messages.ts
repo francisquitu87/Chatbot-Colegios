@@ -23,7 +23,7 @@ export async function listMessages(conversationId: string): Promise<ChatMessage[
   for (const file of generatedFiles) {
     if (!file.message_id) continue
     const files = filesByMessage.get(file.message_id) ?? new Map<string, GeneratedFile>()
-    files.set(file.id, { id: file.id, filename: file.filename, mime_type: file.mime_type, size_bytes: file.size_bytes, version: file.version, ...(file.parent_generated_file_id ? { parent_generated_file_id: file.parent_generated_file_id } : {}) })
+    files.set(file.id, { id: file.id, filename: file.filename, mime_type: file.mime_type, size_bytes: file.size_bytes, version: file.version, format: file.mime_type.includes('spreadsheet') ? 'xlsx' : 'pdf', ...(file.parent_generated_file_id ? { parent_generated_file_id: file.parent_generated_file_id } : {}) })
     filesByMessage.set(file.message_id, files)
   }
   return (data as MessageRow[]).map((message) => ({ id: message.id, role: message.role as MessageRole, content: textFromContent(message.content), generatedFiles: filesByMessage.has(message.id) ? [...filesByMessage.get(message.id)!.values()] : undefined, status: message.status === 'completed' ? 'complete' : message.status === 'streaming' ? 'streaming' : message.status === 'failed' ? 'error' : undefined }))

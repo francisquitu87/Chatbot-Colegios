@@ -1,4 +1,4 @@
-import { Download, FileText } from 'lucide-react'
+import { Download, FileSpreadsheet, FileText } from 'lucide-react'
 import { createGeneratedFileDownloadUrl } from '../../lib/api/generatedFiles'
 import type { GeneratedFile } from '../../lib/chat/types'
 
@@ -16,7 +16,7 @@ export function GeneratedFileCard({ file }: GeneratedFileCardProps) {
 
   return (
     <div className="generated-file-card" data-generated-file-id={file.id}>
-      <span className="generated-file-card__icon"><FileText size={17} /></span>
+      <span className="generated-file-card__icon">{file.format === 'xlsx' || file.mime_type.includes('spreadsheet') ? <FileSpreadsheet size={17} /> : <FileText size={17} />}</span>
       <div className="generated-file-card__info">
         <strong>{file.filename}</strong>
         <small>v{file.version} · {formatBytes(file.size_bytes)}</small>

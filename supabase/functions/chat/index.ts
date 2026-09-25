@@ -45,7 +45,7 @@ type AppEvent =
   | { type: 'text_delta'; content: string }
   | { type: 'tool_start'; toolName: string; callId: string }
   | { type: 'tool_end'; toolName: string; callId: string; success: boolean }
-  | { type: 'file_generated'; file: { id: string; filename: string; mime_type: string; size_bytes: number; version: number; parent_generated_file_id?: string } }
+  | { type: 'file_generated'; file: { id: string; filename: string; mime_type: string; format: 'pdf' | 'xlsx'; size_bytes: number; version: number; parent_generated_file_id?: string } }
   | { type: 'done'; responseId?: string }
   | { type: 'error'; error: { code: string; message: string } }
 
@@ -60,15 +60,15 @@ type FunctionCallItem = {
 type FunctionCallArgumentsDelta = { type: 'response.function_call_arguments.delta'; call_id: string; delta: string }
 type FunctionCallArgumentsDone = { type: 'response.function_call_arguments.done'; call_id: string; arguments: string }
 
-function isGeneratedFileResult(value: unknown): value is { generated_file_id: string; filename: string; version: number; parent_generated_file_id?: string; mime_type: string; size_bytes: number } {
-  return typeof value === 'object' && value !== null && typeof (value as { generated_file_id?: unknown }).generated_file_id === 'string' && typeof (value as { filename?: unknown }).filename === 'string' && typeof (value as { version?: unknown }).version === 'number' && typeof (value as { mime_type?: unknown }).mime_type === 'string' && typeof (value as { size_bytes?: unknown }).size_bytes === 'number'
+function isGeneratedFileResult(value: unknown): value is { generated_file_id: string; filename: string; version: number; parent_generated_file_id?: string; mime_type: string; format: 'pdf' | 'xlsx'; size_bytes: number } {
+  return typeof value === 'object' && value !== null && typeof (value as { generated_file_id?: unknown }).generated_file_id === 'string' && typeof (value as { filename?: unknown }).filename === 'string' && typeof (value as { version?: unknown }).version === 'number' && typeof (value as { mime_type?: unknown }).mime_type === 'string' && ((value as { format?: unknown }).format === 'pdf' || (value as { format?: unknown }).format === 'xlsx') && typeof (value as { size_bytes?: unknown }).size_bytes === 'number'
 }
 
 function isArtifactTool(toolName: string) {
-  return toolName === 'generate_pdf' || toolName === 'revise_generated_document'
+  return toolName === 'generate_pdf' || toolName === 'revise_generated_document' || toolName === 'generate_excel'
 }
 
-const assistantInstructions = `You are CSFR Assistant. Generated files are represented by the application UI. Never generate Markdown download links for generated files, never invent URLs, and never use localhost or 127.0.0.1 as file links. After creating or revising a file, briefly confirm the operation and let the file card handle downloading. Preserve unrequested document content when revising. Use revise_generated_document for revisions of existing generated PDFs.`
+const assistantInstructions = `You are CSFR Assistant. Generated files are represented by the application UI. Never generate Markdown download links for generated files, never invent URLs, and never use localhost or 127.0.0.1 as file links. After creating a PDF or XLSX, briefly confirm the operation and let the file card handle downloading. Preserve unrequested document content when revising. Use revise_generated_document only for revisions of existing generated PDFs. Use generate_excel only for explicit initial Excel generation, using only data provided by the user or conversation and never inventing factual spreadsheet data.`
 
 function jsonResponse(body: unknown, status: number, headers: Record<string, string>) {
   return new Response(JSON.stringify(body), { status, headers })
@@ -279,7 +279,7 @@ Deno.serve(async (request) => {
                 artifactExecution = execution
                 controller.enqueue(encoder.encode(streamEvent({
                   type: 'file_generated',
-                  file: { id: execution.result.data.generated_file_id, filename: execution.result.data.filename, mime_type: execution.result.data.mime_type, size_bytes: execution.result.data.size_bytes, version: execution.result.data.version, ...(execution.result.data.parent_generated_file_id ? { parent_generated_file_id: execution.result.data.parent_generated_file_id } : {}) },
+                  file: { id: execution.result.data.generated_file_id, filename: execution.result.data.filename, mime_type: execution.result.data.mime_type, format: execution.result.data.format, size_bytes: execution.result.data.size_bytes, version: execution.result.data.version, ...(execution.result.data.parent_generated_file_id ? { parent_generated_file_id: execution.result.data.parent_generated_file_id } : {}) },
                 })))
               }
               outputs.push({ type: 'function_call_output', call_id: call.call_id, output: JSON.stringify(execution.result) })
